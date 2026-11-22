@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skill-vet"
+version = "0.1.0"
+description = "Scan agent skills for hidden instructions, dangerous scripts, broad permissions and unapproved changes."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Osama Wehbi" }]
+keywords = ["agent-skills", "ai-agents", "ai-security", "llm-security", "prompt-injection", "supply-chain-security", "sarif"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+]
+dependencies = [
+    "pydantic>=2.12,<3",
+    "pyyaml>=6.0",
+    "rich>=13.7",
+    "typer>=0.16",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.17",
+    "bandit>=1.8",
+    "pip-audit>=2.9",
+    "pre-commit>=4.0",
+]
+
+[project.scripts]
+skill-vet = "skill_vet.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/OsamaWehbi/skill-vet"
+Issues = "https://github.com/OsamaWehbi/skill-vet/issues"
+Changelog = "https://github.com/OsamaWehbi/skill-vet/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skill_vet"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "BLE", "UP", "S", "SIM", "RUF"]
+ignore = ["E501", "S101", "RUF001", "RUF002", "RUF003", "RUF012", "SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "S603"]
+"examples/*" = ["S603", "S607"]
+"src/skill_vet/cli.py" = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
