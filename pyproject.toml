@@ -35,7 +35,7 @@ dev = [
     "pytest>=9.2.0",
     "ruff>=0.17.5",
     "bandit>=1.9.4",
-    "pip-audit>=2.9",
+    "pip-audit>=2.10.1",
     "pre-commit>=4.7.0",
 ]
 
