@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint & test (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.11", "3.12", "3.13"]
+        include:
+          - os: windows-latest
+            python: "3.12"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e ".[dev]"
+      - name: Ruff (lint + format)
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Rules reference is up to date
+        shell: bash
+        run: |
+          python scripts/gen_rules_doc.py
+          git diff --exit-code docs/rules.md
+      - name: Tests
+        run: pytest
+
+  security:
+    name: Security scans
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read  # gitleaks-action lists the PR's commits
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m pip install . bandit pip-audit
+      - name: Bandit (SAST)
+        run: bandit -q -r src -c pyproject.toml
+      - name: pip-audit (dependency CVEs)
+        run: pip-audit --progress-spinner off --skip-editable
+      - name: Gitleaks (secret scanning)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  action:
+    name: GitHub Action self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Scan the malicious example skills (must find issues)
+        id: demo
+        continue-on-error: true
+        uses: ./
+        with:
+          args: examples/skills/malicious examples/skills/archives
+          sarif: malicious.sarif
+      - name: Check the scan failed and wrote SARIF
+        run: |
+          test "${{ steps.demo.outcome }}" = "failure"
+          python -c "import json; d=json.load(open('malicious.sarif')); assert d['runs'][0]['results']"
+      - name: Scan the clean example skills and the bundled skill (must pass)
+        uses: ./
+        with:
+          args: examples/skills/clean skill
+          sarif: clean.sarif
