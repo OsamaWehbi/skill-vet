@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Any
 
 from rich.console import Console
@@ -106,10 +107,14 @@ def _fingerprint(f: Finding) -> str:
 
 
 def _uri(f: Finding) -> str:
+    """A relative path when skill-vet was given relative paths (what code scanning expects), else a file:// URI."""
     root = f.skill.split("!/", 1)[0] if "!/" in f.skill else f.skill
     if "!/" in f.skill or root.lower().endswith((".zip", ".skill")):
-        return root  # inside an archive: point at the archive itself
-    return f"{root}/{f.path}" if f.path else f"{root}/SKILL.md"
+        uri = root  # inside an archive: point at the archive itself
+    else:
+        uri = f"{root}/{f.path}" if f.path else f"{root}/SKILL.md"
+    path = Path(uri)
+    return path.as_uri() if path.is_absolute() else uri
 
 
 def to_sarif(result: Result) -> str:

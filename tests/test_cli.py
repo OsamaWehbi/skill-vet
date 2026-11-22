@@ -48,9 +48,12 @@ def test_json_report(tmp_path):
     assert all(f["rule_id"] in RULES for f in doc["findings"])
 
 
-def test_sarif_report(tmp_path):
+def test_sarif_report(tmp_path, monkeypatch):
+    monkeypatch.chdir(ROOT)
     out = tmp_path / "r.sarif"
-    invoke("scan", EXAMPLES / "malicious", EXAMPLES / "archives", "-f", "sarif", "-o", out, "--fail-on", "none")
+    invoke(
+        "scan", "examples/skills/malicious", "examples/skills/archives", "-f", "sarif", "-o", out, "--fail-on", "none"
+    )
     doc = json.loads(out.read_text(encoding="utf-8"))
     run = doc["runs"][0]
     ids = [r["id"] for r in run["tool"]["driver"]["rules"]]
@@ -63,6 +66,13 @@ def test_sarif_report(tmp_path):
         r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"].endswith("theme-pack.skill")
         for r in run["results"]
     )
+    absolute = tmp_path / "abs.sarif"
+    invoke("scan", EXAMPLES / "malicious" / "git-helper", "-f", "sarif", "-o", absolute, "--fail-on", "none")
+    uris = [
+        r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+        for r in json.loads(absolute.read_text(encoding="utf-8"))["runs"][0]["results"]
+    ]
+    assert uris and all(u.startswith("file://") for u in uris)
 
 
 def test_markdown_and_summary(tmp_path):
