@@ -1,0 +1,51 @@
+name: skill-vet
+description: Scan agent skills for hidden instructions, dangerous scripts, broad permissions and unapproved changes.
+author: Osama Wehbi
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  args:
+    description: >
+      Inputs passed to `skill-vet scan`, for example `skills/ --lock skill-vet.lock --exclude 'skills/vendor/*'`.
+      Do not include --format or --output; use the inputs below.
+    required: true
+  fail-on:
+    description: Fail the step when a finding is at or above this severity (high, medium, low, info or none).
+    default: high
+  sarif:
+    description: Where to write the SARIF report. Upload it with github/codeql-action/upload-sarif.
+    default: skill-vet.sarif
+  python-version:
+    description: Python version used to run skill-vet.
+    default: "3.12"
+
+outputs:
+  sarif:
+    description: Path of the SARIF report.
+    value: ${{ inputs.sarif }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install skill-vet
+      shell: bash
+      run: python -m pip install --quiet "$GITHUB_ACTION_PATH"
+    - name: Run skill-vet
+      shell: bash
+      env:
+        SKILL_VET_ARGS: ${{ inputs.args }}
+        SKILL_VET_FAIL_ON: ${{ inputs.fail-on }}
+        SKILL_VET_SARIF: ${{ inputs.sarif }}
+      # Inputs are passed through environment variables, never interpolated into the script,
+      # so a malicious input cannot inject shell commands.
+      run: |
+        read -r -a args <<< "$SKILL_VET_ARGS"
+        skill-vet scan "${args[@]}" \
+          --format sarif --output "$SKILL_VET_SARIF" \
+          --fail-on "$SKILL_VET_FAIL_ON" \
+          --summary "$GITHUB_STEP_SUMMARY"

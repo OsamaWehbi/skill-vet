@@ -1,0 +1,10 @@
+# Extends the default rules. The only exception is the made-up access key ID in an example skill, which exists to
+# show what SV304 detects and grants access to nothing.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Made-up credential in the example skills"
+regexes = [
+  '''AKIA2E0A8F3B244C9986''',
+]
