@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-22
+
 ### Added
 
 - `skill-vet scan` for skill folders, folders of skills and `.zip` or `.skill` archives, with table, JSON, SARIF 2.1.0
@@ -17,3 +19,6 @@ All notable changes to this project are documented here. The format follows
 - `skill-vet inspect` to show a skill's files, what each one does, and its hidden text, decoded.
 - A GitHub Action, a skill that makes an agent run skill-vet before installing other skills, example clean and
   malicious skills, and a generated rules reference.
+
+[Unreleased]: https://github.com/OsamaWehbi/skill-vet/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/OsamaWehbi/skill-vet/releases/tag/v0.1.0
